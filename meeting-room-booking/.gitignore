@@ -38,6 +38,8 @@ build/
 .env.production
 *.env
 
+src/main/resources/application-dev.properties
+
 ### Application Properties with Secrets ###
 # Keep application.properties but remove sensitive data
 # Use environment variables in production
