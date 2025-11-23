@@ -1,16 +1,19 @@
 package com.roombooking.system.service;
 
-import com.roombooking.system.dto.RoomRequest;
-import com.roombooking.system.dto.RoomResponse;
-import com.roombooking.system.model.Room;
-import com.roombooking.system.repository.RoomRepository;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+import java.util.stream.Collectors;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.stream.Collectors;
+import com.roombooking.system.dto.RoomRequest;
+import com.roombooking.system.dto.RoomResponse;
+import com.roombooking.system.model.Room;
+import com.roombooking.system.model.User;
+import com.roombooking.system.repository.RoomRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
@@ -18,9 +21,11 @@ import java.util.stream.Collectors;
 public class RoomService {
 
     private final RoomRepository roomRepository;
+    private final AuditLogService auditLogService;
+    private final UserService userService;
 
     @Transactional
-    public RoomResponse createRoom(RoomRequest request) {
+    public RoomResponse createRoom(RoomRequest request, User admin) {
         log.info("Creating new room: {}", request.name());
 
         Room room = new Room();
@@ -34,15 +39,21 @@ public class RoomService {
         Room savedRoom = roomRepository.save(room);
         log.info("Room created successfully with ID: {}", savedRoom.getId());
 
+        // AUDIT LOG with admin user (can be null for system actions)
+        auditLogService.logCreate(admin, "ROOM", savedRoom.getId(), savedRoom);
+
         return mapToResponse(savedRoom);
     }
 
     @Transactional
-    public RoomResponse updateRoom(Long roomId, RoomRequest request) {
+    public RoomResponse updateRoom(Long roomId, RoomRequest request, User admin) {
         log.info("Updating room ID: {}", roomId);
 
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new RuntimeException("Room not found with ID: " + roomId));
+
+        // Store old state for audit
+        String oldState = String.format("name=%s,capacity=%d", room.getName(), room.getCapacity());
 
         room.setName(request.name());
         room.setCapacity(request.capacity());
@@ -53,11 +64,14 @@ public class RoomService {
         Room updatedRoom = roomRepository.save(room);
         log.info("Room updated successfully: {}", updatedRoom.getId());
 
+        // AUDIT LOG with admin user
+        auditLogService.logUpdate(admin, "ROOM", roomId, oldState, updatedRoom);
+
         return mapToResponse(updatedRoom);
     }
 
     @Transactional
-    public void deleteRoom(Long roomId) {
+    public void deleteRoom(Long roomId, User admin) {
         log.info("Deleting room ID: {}", roomId);
 
         Room room = roomRepository.findById(roomId)
@@ -66,6 +80,10 @@ public class RoomService {
         // Soft delete
         room.setIsActive(false);
         roomRepository.save(room);
+        
+        // AUDIT LOG with admin user
+        auditLogService.logDelete(admin, "ROOM", roomId, room);
+        
         log.info("Room soft-deleted: {}", roomId);
     }
 
@@ -113,5 +131,20 @@ public class RoomService {
                 room.getImageUrl(),
                 room.getIsActive()
         );
+    }
+    
+    @Transactional
+    public RoomResponse createRoom(RoomRequest request) {
+        return createRoom(request, null);
+    }
+
+    @Transactional
+    public RoomResponse updateRoom(Long roomId, RoomRequest request) {
+        return updateRoom(roomId, request, null);
+    }
+
+    @Transactional
+    public void deleteRoom(Long roomId) {
+        deleteRoom(roomId, null);
     }
 }

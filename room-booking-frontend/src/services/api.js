@@ -55,4 +55,12 @@ export const reportAPI = {
   getLastWeek: () => api.get('/reports/bookings/last-week', { responseType: 'blob' }),
 };
 
+// Audit Log APIs
+export const auditAPI = {
+  getRecent: () => api.get('/audit/recent'),
+  getByEntityType: (entityType) => api.get(`/audit/entity/${entityType}`),
+  getByEntity: (entityType, entityId) => api.get(`/audit/entity/${entityType}/${entityId}`),
+  getByDateRange: (start, end) => api.get(`/audit/date-range?start=${start}&end=${end}`),
+};
+
 export default api;

@@ -1,22 +1,29 @@
 package com.roombooking.system.service;
 
-import com.roombooking.system.model.Booking;
-import com.roombooking.system.model.User;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.format.DateTimeFormatter;
+import com.roombooking.system.model.Booking;
+import com.roombooking.system.repository.BookingRepository;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class EmailService {
 
+	private final BookingRepository bookingRepository;
     private final JavaMailSender mailSender;
 
     @Value("${spring.mail.username}")
@@ -298,6 +305,26 @@ public class EmailService {
             log.info("Email sent successfully to: {}", to);
         } catch (Exception e) {
             log.error("Failed to send email: {}", e.getMessage());
+        }
+    }
+    
+    @Scheduled(cron = "0 */15 * * * *") // Run every 15 minutes
+    @Async
+    public void sendUpcomingMeetingReminders() {
+        log.info("Checking for upcoming meetings to send reminders...");
+        
+        LocalDate today = LocalDate.now();
+        LocalTime now = LocalTime.now();
+        LocalTime fifteenMinutesLater = now.plusMinutes(15);
+        
+        List<Booking> upcomingBookings = bookingRepository.findUpcomingBookings(
+            today, now, fifteenMinutesLater
+        );
+        
+        log.info("Found {} upcoming meetings", upcomingBookings.size());
+        
+        for (Booking booking : upcomingBookings) {
+            sendMeetingReminderEmail(booking);
         }
     }
 }

@@ -61,8 +61,8 @@ export default function EmployeeDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Welcome, {user?.fullName}!</h1>
-          <p className="text-gray-600 mt-1">Manage your meeting room bookings</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Welcome, {user?.fullName}!</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">Manage your meeting room bookings</p>
           
           {/* Quick Navigation */}
           <div className="flex space-x-4 mt-4">
@@ -74,6 +74,9 @@ export default function EmployeeDashboard() {
             </Link>
             <Link to="/employee/rooms" className="text-blue-600 hover:text-blue-700 font-medium">
               Browse Rooms
+            </Link>
+            <Link to="/employee/recurring-bookings" className="text-blue-600 hover:text-blue-700 font-medium">
+              Recurring Bookings
             </Link>
           </div>
         </div>

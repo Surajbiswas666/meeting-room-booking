@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { ThemeProvider } from './context/ThemeContext';
 
 // Auth Components
 import Login from './components/auth/Login';
@@ -12,12 +11,14 @@ import EmployeeDashboard from './components/employee/Dashboard';
 import CreateBooking from './components/employee/CreateBooking';
 import MyBookings from './components/employee/MyBookings';
 import RoomList from './components/employee/RoomList';
+import RecurringBookings from './components/employee/RecurringBookings';
 
 // Admin Components
 import AdminDashboard from './components/admin/AdminDashboard';
 import PendingApprovals from './components/admin/PendingApprovals';
 import ManageRooms from './components/admin/ManageRooms';
 import Reports from './components/admin/Reports';
+import AuditLogs from './components/admin/AuditLogs';
 
 // Protected Route Component
 const ProtectedRoute = ({ children, adminOnly = false }) => {
@@ -134,6 +135,15 @@ function App() {
             }
           />
 
+          <Route
+            path="/employee/recurring-bookings"
+            element={
+              <ProtectedRoute>
+                <RecurringBookings />
+              </ProtectedRoute>
+            }
+          />
+
           {/* Admin Routes */}
           <Route
             path="/admin/dashboard"
@@ -167,6 +177,17 @@ function App() {
               </ProtectedRoute>
             }
           />
+          <Route
+          path="/admin/audit-logs"
+          element={
+            <ProtectedRoute adminOnly>
+              <AuditLogs />
+            </ProtectedRoute>
+          }
+        />
+
+          
+
 
           {/* Default Route - Role-based redirect */}
           <Route path="/" element={<RoleBasedRedirect />} />

@@ -152,6 +152,17 @@ export default function AdminDashboard() {
                 <h3 className="text-lg font-semibold mb-2">Generate Reports</h3>
                 <p className="text-sm opacity-90">Download PDF reports and analytics</p>
               </Link>
+
+
+              <Link
+                  to="/admin/audit-logs"
+                  className="card hover:shadow-lg transition-shadow cursor-pointer 
+                            bg-gradient-to-br from-purple-500 to-purple-600 text-white"
+                >
+                  <h3 className="text-lg font-semibold mb-2">Audit Logs</h3>
+                  <p className="text-sm opacity-90">Track all system activities</p>
+                </Link>
+
             </div>
 
             {/* Room Utilization */}

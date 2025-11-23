@@ -27,7 +27,7 @@ public class BookingService {
     private final RoomService roomService;
     private final UserService userService;
     private final EmailService emailService;
-
+    private final AuditLogService auditLogService;
     @Transactional
     public BookingResponse createBooking(BookingRequest request) {
         log.info("Creating booking for room ID: {} by user ID: {}", request.roomId(), request.userId());
@@ -67,7 +67,7 @@ public class BookingService {
 
         Booking savedBooking = bookingRepository.save(booking);
         log.info("Booking created with ID: {} and status: PENDING", savedBooking.getId());
-
+        auditLogService.logCreate(user, "BOOKING", savedBooking.getId(), savedBooking);
         // ---------------- EMAIL EVENTS ----------------
 
         // 1. Send email to user (confirmation of submission)
@@ -107,30 +107,37 @@ public class BookingService {
                     booking.getEndTime()
             );
 
-            if (!conflicts.isEmpty()) {
-                throw new RuntimeException("Room has been booked by another approved booking");
-            }
-
-            booking.setStatus(BookingStatus.APPROVED);
-            log.info("Booking ID: {} APPROVED by admin ID: {}", request.bookingId(), request.adminId());
-
-            // Send approval email to user
-            emailService.sendBookingApprovedEmail(booking);
-
-        } else {
-            booking.setStatus(BookingStatus.REJECTED);
-            log.info("Booking ID: {} REJECTED by admin ID: {}", request.bookingId(), request.adminId());
-
-            // Send rejection email to user
-            emailService.sendBookingRejectedEmail(booking);
+        if (!conflicts.isEmpty()) {
+            throw new RuntimeException("Room has been booked by another approved booking");
         }
 
-        booking.setApprovedBy(admin);
-        booking.setApprovedAt(LocalDateTime.now());
-
-        Booking updatedBooking = bookingRepository.save(booking);
-        return mapToResponse(updatedBooking);
+        booking.setStatus(BookingStatus.APPROVED);
+        log.info("Booking ID: {} APPROVED by admin ID: {}", request.bookingId(), request.adminId());
+        
+        // AUDIT LOG - Approve action
+        auditLogService.logApprove(admin, "BOOKING", request.bookingId());
+    } else {
+        booking.setStatus(BookingStatus.REJECTED);
+        log.info("Booking ID: {} REJECTED by admin ID: {}", request.bookingId(), request.adminId());
+        
+        // AUDIT LOG - Reject action
+        auditLogService.logReject(admin, "BOOKING", request.bookingId());
     }
+
+    booking.setApprovedBy(admin);
+    booking.setApprovedAt(LocalDateTime.now());
+
+    Booking updatedBooking = bookingRepository.save(booking);
+    
+    // Send email notification
+    if (request.approve()) {
+        emailService.sendBookingApprovedEmail(updatedBooking);
+    } else {
+        emailService.sendBookingRejectedEmail(updatedBooking);
+    }
+    
+    return mapToResponse(updatedBooking);
+}
 
     @Transactional
     public void cancelBooking(Long bookingId, Long userId) {
@@ -141,17 +148,16 @@ public class BookingService {
 
         User user = userService.getUserById(userId);
 
-        // Only owner or admin can cancel
         if (!booking.getUser().getId().equals(userId) && user.getRole() != UserRole.ADMIN) {
             throw new RuntimeException("You can only cancel your own bookings");
         }
 
         booking.setStatus(BookingStatus.CANCELLED);
         bookingRepository.save(booking);
+        
+        // AUDIT LOG - Cancel action with actual user
+        auditLogService.logCancel(user, "BOOKING", bookingId);
         log.info("Booking cancelled: {}", bookingId);
-
-        // Send cancellation email
-       // emailService.sendBookingCancelledEmail(booking);
     }
 
     public List<BookingResponse> getMyBookings(Long userId) {
