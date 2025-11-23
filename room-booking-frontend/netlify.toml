@@ -1,4 +1,5 @@
 [build]
+  base = "./room-booking-frontend"
   command = "npm run build"
   publish = "dist"
 
