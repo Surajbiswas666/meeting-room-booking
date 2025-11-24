@@ -82,7 +82,7 @@ Takes two numbers and returns the sum.
 
 Base URL: https://localhost:8080/api
 
-Frontend URL : zingy-naiad-f86d44.netlify.app
+Frontend URL : https://meeting-room-gamma.vercel.app
 
 Authentication:
   POST   /auth/login
