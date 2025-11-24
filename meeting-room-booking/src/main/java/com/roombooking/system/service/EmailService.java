@@ -308,7 +308,7 @@ public class EmailService {
         }
     }
     
-    @Scheduled(cron = "0 */15 * * * *") // Run every 15 minutes
+    @Scheduled(cron = "0 */14 * * * *") 
     @Async
     public void sendUpcomingMeetingReminders() {
         log.info("Checking for upcoming meetings to send reminders...");

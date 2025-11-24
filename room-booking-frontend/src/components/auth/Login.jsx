@@ -110,6 +110,9 @@ export default function Login() {
           <p className="text-xs text-gray-500 text-center">
             Demo: Use registered credentials or create new account
           </p>
+          <p className="text-xs text-gray-500 text-center">
+            PS: Create both admin and employee accounts to test role-based access
+          </p>
         </div>
       </div>
     </div>

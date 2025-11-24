@@ -158,7 +158,7 @@ export default function Register() {
                 name="role"
                 value={formData.role}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg bg-white"
+                className="input-field w-full px-4 py-2 border border-gray-200 rounded-lg"
                 required
               >
                 <option value="EMPLOYEE">Employee</option>
